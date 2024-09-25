@@ -138,13 +138,13 @@ class MiipherLightningModule(LightningModule):
         return loss
     @torch.inference_mode()
     def synthesis(self,features:torch.Tensor,wav16k,wav16k_lens):
-        vocoder = HiFiGANXvectorLightningModule.load_from_checkpoint("https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wavlm-large-l8-xvector/wavlm-large-l8-xvector.ckpt",map_location='cpu')
+        vocoder = HiFiGANXvectorLightningModule.load_from_checkpoint("https://huggingface.co/Wataru/ssl-vocoder/resolve/main/wavlm-large-l8-xvector/wavlm-large-l8-xvector.ckpt",map_location='cuda')
         vocoder.eval()
         xvector_model = hydra.utils.instantiate(vocoder.cfg.data.xvector.model)
         xvector_model.eval()
-        xvector = xvector_model.encode_batch(wav16k.unsqueeze(0).cpu()).squeeze(1)
+        xvector = xvector_model.encode_batch(wav16k.unsqueeze(0).cuda()).squeeze(1)
         vocoder = vocoder.float()
-        return vocoder.generator_forward({"input_feature": features.unsqueeze(0).cpu().float(), "xvector": xvector.cpu().float()})[0].T
+        return vocoder.generator_forward({"input_feature": features.unsqueeze(0).cuda().float(), "xvector": xvector.cuda().float()})[0].T
 
     def log_audio(self, audio, name, sampling_rate):
         for logger in self.loggers:
